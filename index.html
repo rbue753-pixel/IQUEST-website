@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IQUEST - Interactive Educational Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        cyber: ['Orbitron', 'sans-serif'],
+                    },
+                    colors: {
+                        cyberdark: '#030712',
+                        cybersurface: '#0f172a',
+                        cyberprimary: '#06b6d4',
+                        cyberaccent: '#6366f1',
+                        cyberpink: '#ec4899',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #030712;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-panel-hover:hover {
+            border-color: rgba(6, 182, 212, 0.4);
+            box-shadow: 0 0 25px rgba(6, 182, 212, 0.15);
+        }
+        .glow-text {
+            text-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+        }
+        .glow-box {
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.25);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #030712;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #06b6d4;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative selection:bg-cyan-500 selection:text-black">
+
+    <canvas id="bg-canvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+
+    <header class="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <!-- Brand Logo -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('home')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center glow-box">
+                    <span class="font-cyber font-black text-xl text-black">IQ</span>
+                </div>
+                <div>
+                    <span class="font-cyber text-xl font-bold tracking-wider bg-gradient-to-r from-cyan-400 via-indigo-300 to-pink-500 bg-clip-text text-transparent">IQUEST</span>
+                    <span class="block text-[10px] text-cyan-400 tracking-widest uppercase">Academy OS</span>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="hidden md:flex items-center space-x-1 bg-slate-900/60 p-1.5 rounded-full border border-slate-800">
+                <button onclick="switchTab('home')" id="nav-home" class="px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 bg-cyan-500 text-black font-semibold shadow-lg shadow-cyan-500/25">Home</button>
+                <button onclick="switchTab('info')" id="nav-info" class="px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 text-slate-300 hover:text-white hover:bg-slate-800/50">Information Hub</button>
+                <button onclick="switchTab('quiz')" id="nav-quiz" class="px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 text-slate-300 hover:text-white hover:bg-slate-800/50">Quiz Game</button>
+            </nav>
+
+            <!-- Floating Audio Control Widget -->
+            <div class="flex items-center space-x-3 bg-slate-900/80 px-4 py-2 rounded-full border border-slate-800 shadow-lg">
+                <div class="flex items-center space-x-2">
+                    <span class="relative flex h-2.5 w-2.5">
+                      <span id="audio-pulse" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75 hidden"></span>
+                      <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
+                    </span>
+                    <span id="audio-status" class="text-xs font-mono text-slate-400 hidden sm:inline">Sound Off</span>
+                </div>
+                <button id="music-toggle-btn" onclick="toggleBackgroundMusic()" class="p-2 rounded-full bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 transition-all border border-cyan-500/30" title="Toggle Ambient Audio">
+                    <svg id="icon-play" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <svg id="icon-pause" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </button>
+                <select id="mood-select" onchange="changeAudioMood(this.value)" class="bg-slate-950 text-xs text-slate-300 border border-slate-700 rounded-lg px-2 py-1 focus:outline-none focus:border-cyan-500 hidden sm:block">
+                    <option value="cosmic">Cosmic Ambient</option>
+                    <option value="cyber">Cyber Pulse</option>
+                    <option value="zen">Focus Zen</option>
+                </select>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-slate-300 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                </svg>
+            </button>
+        </div>
+        <!-- Mobile Dropdown -->
+        <div id="mobile-menu" class="hidden md:hidden glass-panel border-t border-slate-800 p-4 space-y-2">
+            <button onclick="switchTab('home'); toggleMobileMenu();" class="w-full text-left px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800">Home</button>
+            <button onclick="switchTab('info'); toggleMobileMenu();" class="w-full text-left px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800">Information Hub</button>
+            <button onclick="switchTab('quiz'); toggleMobileMenu();" class="w-full text-left px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800">Quiz Game</button>
+        </div>
+    </header>
+
+    <main class="flex-grow pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full relative z-10">
+
+        <!-- ================= HOME VIEW ================= -->
+        <section id="view-home" class="space-y-16 animate-fade-in">
+            <!-- Hero Banner -->
+            <div class="text-center py-12 md:py-20 space-y-6 max-w-4xl mx-auto">
+                <div class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono uppercase tracking-widest">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    Interactive Knowledge Protocol v3.0
+                </div>
+                <h1 class="font-cyber text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-tight">
+                    EXPAND YOUR <span class="bg-gradient-to-r from-cyan-400 via-indigo-400 to-pink-500 bg-clip-text text-transparent glow-text">INTELLIGENCE</span>
+                </h1>
+                <p class="text-slate-400 text-base sm:text-xl max-w-2xl mx-auto leading-relaxed">
+                    Immerse yourself in futuristic learning. Explore deep cosmic, scientific, technological, and historical insights, then test your mastery with our dynamic quiz engine.
+                </p>
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+                    <button onclick="switchTab('quiz')" class="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 text-black font-cyber font-bold hover:opacity-90 transition-all shadow-xl shadow-cyan-500/20 transform hover:-translate-y-0.5">
+                        Start Quiz Game
+                    </button>
+                    <button onclick="switchTab('info')" class="w-full sm:w-auto px-8 py-4 rounded-xl glass-panel glass-panel-hover font-cyber font-bold text-slate-200 transition-all">
+                        Explore Information Hub
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Feature Highlights -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-panel p-8 rounded-2xl glass-panel-hover transition-all space-y-4">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-cyber font-bold text-xl">01</div>
+                    <h3 class="font-cyber text-xl font-bold text-white">Dynamic Canvas</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">Interactive background nodes that respond to your cursor movements, creating a living synaptic digital lattice.</p>
+                </div>
+                <div class="glass-panel p-8 rounded-2xl glass-panel-hover transition-all space-y-4">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-cyber font-bold text-xl">02</div>
+                    <h3 class="font-cyber text-xl font-bold text-white">Sonic Ambiance</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">Procedural Web Audio API soundscapes and interactive sound effects designed to elevate cognitive focus.</p>
+                </div>
+                <div class="glass-panel p-8 rounded-2xl glass-panel-hover transition-all space-y-4">
+                    <div class="w-12 h-12 rounded-xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400 font-cyber font-bold text-xl">03</div>
+                    <h3 class="font-cyber text-xl font-bold text-white">Mastery Challenges</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">Gamified quizzes across multiple disciplines with real-time feedback, timers, score streaks, and victory effects.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= INFORMATION HUB VIEW ================= -->
+        <section id="view-info" class="space-y-8 hidden animate-fade-in">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-800 pb-6">
+                <div>
+                    <span class="text-cyan-400 font-mono text-xs uppercase tracking-widest">Knowledge Database</span>
+                    <h2 class="font-cyber text-3xl sm:text-4xl font-bold text-white mt-1">Information Hub</h2>
+                </div>
+                <!-- Category Filter Buttons -->
+                <div class="flex flex-wrap gap-2" id="info-filters">
+                    <button onclick="filterInfo('all')" class="px-4 py-2 rounded-lg text-xs font-mono font-bold bg-cyan-500 text-black transition-all filter-btn" data-category="all">ALL TOPICS</button>
+                    <button onclick="filterInfo('space')" class="px-4 py-2 rounded-lg text-xs font-mono font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition-all filter-btn" data-category="space">SPACE</button>
+                    <button onclick="filterInfo('tech')" class="px-4 py-2 rounded-lg text-xs font-mono font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition-all filter-btn" data-category="tech">TECHNOLOGY</button>
+                    <button onclick="filterInfo('science')" class="px-4 py-2 rounded-lg text-xs font-mono font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition-all filter-btn" data-category="science">SCIENCE</button>
+                    <button onclick="filterInfo('history')" class="px-4 py-2 rounded-lg text-xs font-mono font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition-all filter-btn" data-category="history">HISTORY</button>
+                </div>
+            </div>
+
+            <!-- Topic Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="info-cards-container">
+                <!-- Cards injected via JS or static -->
+            </div>
+        </section>
+
+        <!-- ================= QUIZ GAME VIEW ================= -->
+        <section id="view-quiz" class="space-y-8 hidden animate-fade-in max-w-4xl mx-auto">
+            <div class="text-center space-y-3">
+                <span class="text-cyan-400 font-mono text-xs uppercase tracking-widest">Gamified Assessment</span>
+                <h2 class="font-cyber text-3xl sm:text-4xl font-bold text-white">IQUEST Quiz Arena</h2>
+                <p class="text-slate-400 text-sm">Select a category, beat the countdown timer, and claim your victory score.</p>
+            </div>
+
+            <!-- Category Selection Screen -->
+            <div id="quiz-setup" class="glass-panel p-8 rounded-3xl space-y-6">
+                <h3 class="font-cyber text-xl font-bold text-cyan-300 text-center">Choose Your Challenge Discipline</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button onclick="startQuiz('space')" class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-cyan-500 transition-all text-left space-y-2 group">
+                        <div class="flex items-center justify-between">
+                            <span class="font-cyber font-bold text-lg text-white group-hover:text-cyan-400">Deep Space</span>
+                            <span class="text-xs font-mono px-2.5 py-1 rounded bg-cyan-500/10 text-cyan-400">5 Questions</span>
+                        </div>
+                        <p class="text-slate-400 text-xs leading-relaxed">Exoplanets, astrophysics, black holes, and cosmic anomalies.</p>
+                    </button>
+                    <button onclick="startQuiz('tech')" class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-indigo-500 transition-all text-left space-y-2 group">
+                        <div class="flex items-center justify-between">
+                            <span class="font-cyber font-bold text-lg text-white group-hover:text-indigo-400">Quantum Tech</span>
+                            <span class="text-xs font-mono px-2.5 py-1 rounded bg-indigo-500/10 text-indigo-400">5 Questions</span>
+                        </div>
+                        <p class="text-slate-400 text-xs leading-relaxed">AI algorithms, cryptography, quantum computing, and robotics.</p>
+                    </button>
+                    <button onclick="startQuiz('science')" class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-pink-500 transition-all text-left space-y-2 group">
+                        <div class="flex items-center justify-between">
+                            <span class="font-cyber font-bold text-lg text-white group-hover:text-pink-400">Advanced Science</span>
+                            <span class="text-xs font-mono px-2.5 py-1 rounded bg-pink-500/10 text-pink-400">5 Questions</span>
+                        </div>
+                        <p class="text-slate-400 text-xs leading-relaxed">Genetics, cellular biology, chemical dynamics, and physics.</p>
+                    </button>
+                    <button onclick="startQuiz('history')" class="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-amber-500 transition-all text-left space-y-2 group">
+                        <div class="flex items-center justify-between">
+                            <span class="font-cyber font-bold text-lg text-white group-hover:text-amber-400">World History</span>
+                            <span class="text-xs font-mono px-2.5 py-1 rounded bg-amber-500/10 text-amber-400">5 Questions</span>
+                        </div>
+                        <p class="text-slate-400 text-xs leading-relaxed">Ancient civilizations, industrial revolutions, and global milestones.</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Quiz Gameplay Screen -->
+            <div id="quiz-play" class="glass-panel p-8 rounded-3xl space-y-6 hidden">
+                <!-- Quiz Header / Stats -->
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                    <div class="flex items-center space-x-3">
+                        <span id="quiz-category-badge" class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">Space</span>
+                        <span id="quiz-progress-text" class="text-xs font-mono text-slate-400">Question 1 of 5</span>
+                    </div>
+                    <div class="flex items-center space-x-6">
+                        <div class="text-xs font-mono text-slate-300">Score: <span id="quiz-score" class="font-bold text-cyan-400">0</span></div>
+                        <!-- Timer bar / circle -->
+                        <div class="flex items-center space-x-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
+                            <svg class="w-4 h-4 text-cyan-400 animate-spin-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span id="quiz-timer" class="font-mono text-sm font-bold text-cyan-400">15s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress bar line -->
+                <div class="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden">
+                    <div id="quiz-progress-bar" class="h-full bg-gradient-to-r from-cyan-500 to-indigo-600 w-0 transition-all duration-300"></div>
+                </div>
+
+                <!-- Question Prompt -->
+                <div class="space-y-4 py-2">
+                    <h3 id="quiz-question" class="text-lg sm:text-2xl font-bold text-white leading-snug">Loading question...</h3>
+                </div>
+
+                <!-- Options Grid -->
+                <div id="quiz-options" class="grid grid-cols-1 gap-3">
+                    <!-- Options injected via JS -->
+                </div>
+
+                <!-- Feedback Banner -->
+                <div id="quiz-feedback" class="hidden p-4 rounded-xl text-sm font-medium text-center animate-fade-in"></div>
+            </div>
+
+            <!-- Quiz Results / Victory Screen -->
+            <div id="quiz-results" class="glass-panel p-8 rounded-3xl space-y-6 text-center hidden">
+                <div class="w-20 h-20 mx-auto rounded-full bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-black glow-box animate-float">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="space-y-2">
+                    <h3 class="font-cyber text-3xl font-bold text-white">Assessment Complete!</h3>
+                    <p id="quiz-final-message" class="text-slate-400 text-sm">You have successfully completed the IQUEST protocol.</p>
+                </div>
+                <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 max-w-sm mx-auto space-y-2">
+                    <div class="text-xs font-mono text-slate-400 uppercase tracking-wider">Final Score Recorded</div>
+                    <div id="quiz-final-score" class="font-cyber text-4xl font-black text-cyan-400 glow-text">0 / 500</div>
+                </div>
+                <div class="flex justify-center gap-4 pt-4">
+                    <button onclick="resetQuizSetup()" class="px-8 py-3.5 rounded-xl bg-cyan-500 text-black font-cyber font-bold hover:bg-cyan-400 transition-all shadow-lg shadow-cyan-500/25">
+                        Try Another Category
+                    </button>
+                    <button onclick="switchTab('home')" class="px-8 py-3.5 rounded-xl glass-panel glass-panel-hover font-cyber font-bold text-slate-200 transition-all">
+                        Return Home
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-900 py-8 px-4 text-center text-slate-500 text-xs relative z-10">
+        <p>&copy; 2026 IQUEST Academy OS. Engineered for advanced interactive learning.</p>
+    </footer>
+
+    <script>
+        // ================= WEB AUDIO API SYNTHESIZER & AMBIENT MUSIC =================
+        let audioCtx = null;
+        let isMusicPlaying = false;
+        let musicInterval = null;
+        let currentMood = 'cosmic';
+
+        function initAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Play procedural UI feedback sound effects (clicks, correct, wrong)
+        function playSoundEffect(type) {
+            try {
+                initAudioContext();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+                    gain.gain.setValueAtTime(0.05, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.setValueAtTime(164.81, now + 0.15);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'victory') {
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.type = 'sine';
+                        o.frequency.setValueAtTime(freq, now + idx * 0.12);
+                        g.gain.setValueAtTime(0.1, now + idx * 0.12);
+                        g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.4);
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.start(now + idx * 0.12);
+                        o.stop(now + idx * 0.12 + 0.4);
+                    });
+                }
+            } catch(e) {
+                console.log("Audio context prevented or not initialized yet");
+            }
+        }
+
+        // Procedural ambient background music generator using Web Audio API
+        function startBackgroundMusic() {
+            initAudioContext();
+            if (isMusicPlaying) return;
+            isMusicPlaying = true;
+            document.getElementById('icon-play').classList.add('hidden');
+            document.getElementById('icon-pause').classList.remove('hidden');
+            document.getElementById('audio-pulse').classList.remove('hidden');
+            document.getElementById('audio-status').textContent = 'Sound Live (' + currentMood + ')';
+
+            // Chord progressions based on mood
+            const moods = {
+                cosmic: [130.81, 196.00, 261.63, 329.63], // C minor / ambient drone
+                cyber: [110.00, 164.81, 220.00, 329.63],  // A minor electronic pulse
+                zen: [146.83, 220.00, 293.66, 440.00]      // D major peaceful
+            };
+
+            const chord = moods[currentMood] || moods.cosmic;
+
+            function playDroneChord() {
+                if (!isMusicPlaying) return;
+                try {
+                    const now = audioCtx.currentTime;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    // Filter for warmth
+                    const filter = audioCtx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(800, now);
+
+                    osc.type = currentMood === 'cyber' ? 'sawtooth' : 'sine';
+                    const baseFreq = chord[Math.floor(Math.random() * chord.length)];
+                    osc.frequency.setValueAtTime(baseFreq, now);
+
+                    gain.gain.setValueAtTime(0.001, now);
+                    gain.gain.linearRampToValueAtTime(0.03, now + 1.5);
+                    gain.gain.linearRampToValueAtTime(0.001, now + 4.0);
+
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 4.0);
+                } catch(e) {}
+            }
+
+            playDroneChord();
+            musicInterval = setInterval(playDroneChord, 3500);
+        }
+
+        function stopBackgroundMusic() {
+            isMusicPlaying = false;
+            clearInterval(musicInterval);
+            document.getElementById('icon-play').classList.remove('hidden');
+            document.getElementById('icon-pause').classList.add('hidden');
+            document.getElementById('audio-pulse').classList.add('hidden');
+            document.getElementById('audio-status').textContent = 'Sound Off';
+        }
+
+        function toggleBackgroundMusic() {
+            playSoundEffect('click');
+            if (isMusicPlaying) {
+                stopBackgroundMusic();
+            } else {
+                startBackgroundMusic();
+            }
+        }
+
+        function changeAudioMood(mood) {
+            currentMood = mood;
+            playSoundEffect('click');
+            if (isMusicPlaying) {
+                stopBackgroundMusic();
+                startBackgroundMusic();
+            }
+        }
+
+        // ================= STREAMING_CHUNK:Implementing interactive particle canvas logic and animation loop... =================
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let particles = [];
+        let mouse = { x: null, y: null, radius: 150 };
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        window.addEventListener('mouseout', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.8;
+                this.vy = (Math.random() - 0.5) * 0.8;
+                this.radius = Math.random() * 2 + 1;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x < 0 || this.x > canvas.width) this.vx = -this.vx;
+                if (this.y < 0 || this.y > canvas.height) this.vy = -this.vy;
+
+                // Mouse interaction repulsion/attraction
+                if (mouse.x !== null && mouse.y !== null) {
+                    let dx = mouse.x - this.x;
+                    let dy = mouse.y - this.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < mouse.radius) {
+                        let forceDirectionX = dx / dist;
+                        let forceDirectionY = dy / dist;
+                        let force = (mouse.radius - dist) / mouse.radius;
+                        this.x -= forceDirectionX * force * 1.5;
+                        this.y -= forceDirectionY * force * 1.5;
+                    }
+                }
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(6, 182, 212, 0.6)';
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            let count = Math.floor((canvas.width * canvas.height) / 18000);
+            count = Math.min(Math.max(count, 35), 90);
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle());
+            }
+        }
+        initParticles();
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw particles
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+
+                // Connect nearby particles with lines
+                for (let j = i + 1; j < particles.length; j++) {
+                    let dx = particles[i].x - particles[j].x;
+                    let dy = particles[i].y - particles[j].y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 120) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(6, 182, 212, ${0.15 * (1 - dist / 120)})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.stroke();
+                    }
+                }
+
+                // Connect particles to mouse
+                if (mouse.x !== null && mouse.y !== null) {
+                    let dx = particles[i].x - mouse.x;
+                    let dy = particles[i].y - mouse.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < mouse.radius) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(mouse.x, mouse.y);
+                        ctx.strokeStyle = `rgba(99, 102, 241, ${0.3 * (1 - dist / mouse.radius)})`;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateCanvas);
+        }
+        animateCanvas();
+
+        // ================= STREAMING_CHUNK:Adding application navigation and interactive state logic... =================
+        function switchTab(tabId) {
+            playSoundEffect('click');
+            const views = ['home', 'info', 'quiz'];
+            views.forEach(v => {
+                document.getElementById('view-' + v).classList.add('hidden');
+                const btn = document.getElementById('nav-' + v);
+                if (btn) {
+                    btn.className = 'px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 text-slate-300 hover:text-white hover:bg-slate-800/50';
+                }
+            });
+
+            document.getElementById('view-' + tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('nav-' + tabId);
+            if (activeBtn) {
+                activeBtn.className = 'px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 bg-cyan-500 text-black font-semibold shadow-lg shadow-cyan-500/25';
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleMobileMenu() {
+            playSoundEffect('click');
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // ================= INFORMATION HUB DATA & LOGIC =================
+        const informationData = [
+            {
+                id: 1,
+                category: 'space',
+                title: 'James Webb Space Telescope & Infrared Astronomy',
+                summary: 'Peering 13.5 billion years into the early universe through advanced gold-coated beryllium mirrors.',
+                details: 'JWST operates primarily in the infrared spectrum, allowing it to see through dense cosmic dust clouds that obscured Hubble. By capturing light from the first galaxies formed after the Big Bang, JWST helps scientists understand stellar nurseries and atmospheric compositions of distant exoplanets.'
+            },
+            {
+                id: 2,
+                category: 'space',
+                title: 'Supermassive Black Holes & Event Horizons',
+                summary: 'Gravitational titans residing at the galactic centers warping spacetime itself.',
+                details: 'At the heart of nearly every large galaxy lies a supermassive black hole containing millions to billions of solar masses. The event horizon marks the boundary where escape velocity exceeds the speed of light, producing mesmerizing accretion disks of superheated plasma.'
+            },
+            {
+                id: 3,
+                category: 'tech',
+                title: 'Quantum Computing & Qubits',
+                summary: 'Leveraging superposition and entanglement to solve intractable computational problems.',
+                details: 'Unlike classical bits that represent either 0 or 1, qubits exist in superpositions of states. Quantum algorithms like Shor’s and Grover’s promise exponential speedups in drug discovery, materials science, and asymmetric cryptography.'
+            },
+            {
+                id: 4,
+                category: 'tech',
+                title: 'Artificial Neural Networks & Deep Learning',
+                summary: 'Computational architectures inspired by biological brains driving modern machine intelligence.',
+                details: 'Deep neural networks consist of stacked layers of artificial neurons with adjustable weights. Through backpropagation and vast datasets, these systems learn complex feature hierarchies for computer vision, natural language generation, and autonomous control.'
+            },
+            {
+                id: 5,
+                category: 'science',
+                title: 'CRISPR-Cas9 Gene Editing',
+                summary: 'Precision molecular scissors revolutionizing biotechnology and genetic medicine.',
+                details: 'Adapted from natural bacterial defense mechanisms, CRISPR-Cas9 utilizes a guide RNA molecule to locate specific DNA sequences and Cas9 endonuclease to cleave them. This enables targeted gene knockout, correction of hereditary mutations, and synthetic biology applications.'
+            },
+            {
+                id: 6,
+                category: 'science',
+                title: 'Mitochondria & Cellular Bioenergetics',
+                summary: 'The microscopic powerhouses driving adenosine triphosphate (ATP) synthesis.',
+                details: 'Mitochondria generate chemical energy required for biochemical reactions in eukaryotic cells through oxidative phosphorylation across their inner membrane folds (cristae). They also regulate cellular signaling, differentiation, and apoptosis.'
+            },
+            {
+                id: 7,
+                category: 'history',
+                title: 'The Industrial Revolution & Steam Power',
+                summary: 'The mechanized transformation of human civilization from agrarian economies to industrial powerhouses.',
+                details: 'Beginning in Britain in the late 18th century, the harnessing of steam engines fueled by coal transformed manufacturing, transportation via railways and steamships, and urban demographics, permanently shifting global economic paradigms.'
+            },
+            {
+                id: 8,
+                category: 'history',
+                title: 'The Apollo 11 Lunar Landing',
+                summary: 'Humanity’s monumental leap onto the lunar surface on July 20, 1969.',
+                details: 'Powered by the Saturn V rocket, NASA’s Apollo 11 mission carried Neil Armstrong, Buzz Aldrin, and Michael Collins to the Moon. Over 650 million people watched the broadcast as human footprints were etched into lunar regolith for the first time.'
+            }
+        ];
+
+        function renderInformationCards(filter = 'all') {
+            const container = document.getElementById('info-cards-container');
+            container.innerHTML = '';
+
+            const filtered = filter === 'all' ? informationData : informationData.filter(item => item.category === filter);
+
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'glass-panel p-6 rounded-2xl glass-panel-hover transition-all flex flex-col justify-between space-y-4';
+                card.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="px-3 py-1 rounded text-xs font-mono font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">${item.category}</span>
+                            <span class="text-xs font-mono text-slate-500">IQUEST-INFO #${item.id}</span>
+                        </div>
+                        <h3 class="font-cyber text-lg font-bold text-white">${item.title}</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">${item.summary}</p>
+                        <div id="details-${item.id}" class="hidden pt-2 border-t border-slate-800 text-slate-300 text-xs sm:text-sm leading-relaxed animate-fade-in">
+                            ${item.details}
+                        </div>
+                    </div>
+                    <button onclick="toggleInfoCard(${item.id})" id="btn-toggle-${item.id}" class="w-full py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-cyan-400 text-xs font-cyber font-bold hover:bg-slate-800 transition-all flex items-center justify-center space-x-2">
+                        <span>Expand Research Brief</span>
+                        <svg class="w-4 h-4 transform transition-transform" id="arrow-${item.id}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterInfo(category) {
+            playSoundEffect('click');
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.category === category) {
+                    btn.className = 'px-4 py-2 rounded-lg text-xs font-mono font-bold bg-cyan-500 text-black transition-all filter-btn';
+                } else {
+                    btn.className = 'px-4 py-2 rounded-lg text-xs font-mono font-bold bg-slate-900 text-slate-300 hover:bg-slate-800 transition-all filter-btn';
+                }
+            });
+            renderInformationCards(category);
+        }
+
+        function toggleInfoCard(id) {
+            playSoundEffect('click');
+            const details = document.getElementById('details-' + id);
+            const btn = document.getElementById('btn-toggle-' + id);
+            const arrow = document.getElementById('arrow-' + id);
+
+            if (details.classList.contains('hidden')) {
+                details.classList.remove('hidden');
+                btn.querySelector('span').textContent = 'Collapse Research Brief';
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                details.classList.add('hidden');
+                btn.querySelector('span').textContent = 'Expand Research Brief';
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // Initialize info cards on load
+        renderInformationCards('all');
+
+        // ================= QUIZ GAME DATA & LOGIC =================
+        const quizDatabase = {
+            space: [
+                {
+                    question: "What primary mirror technology does the James Webb Space Telescope use to gather infrared light?",
+                    options: ["Segmented gold-coated beryllium", "Single monolithic borosilicate glass", "Liquid mercury rotating mirror", "Carbon fiber mesh reflectors"],
+                    correct: 0
+                },
+                {
+                    question: "What is the theoretical boundary around a black hole beyond which nothing, not even light, can escape?",
+                    options: ["Photon sphere", "Event horizon", "Accretion singularity", "Ergosphere"],
+                    correct: 1
+                },
+                {
+                    question: "Which exoplanet detection method measures the periodic dimming of a host star as a planet crosses in front of it?",
+                    options: ["Astrometry method", "Gravitational microlensing", "Transit photometry method", "Direct imaging spectroscopy"],
+                    correct: 2
+                },
+                {
+                    question: "What geological feature primarily covers the maria regions of Earth's Moon?",
+                    options: ["Granitic continental crust", "Basritic volcanic rock", "Sedimentary limestone deposits", "Metamorphic gneiss"],
+                    correct: 1
+                },
+                {
+                    question: "Approximately how long does light take to travel from the Sun to Earth?",
+                    options: ["1 second", "8 minutes and 20 seconds", "1 hour and 12 minutes", "24 hours"],
+                    correct: 1
+                }
+            ],
+            tech: [
+                {
+                    question: "Which quantum mechanical phenomenon allows qubits to be correlated such that the state of one instantly dictates the state of another?",
+                    options: ["Quantum tunneling", "Quantum entanglement", "Wave-particle duality", "Superposition decay"],
+                    correct: 1
+                },
+                {
+                    question: "In artificial neural networks, what mathematical function is typically applied to neuron outputs to introduce non-linearity?",
+                    options: ["Linear scaling vector", "Activation function (e.g., ReLU, Sigmoid)", "Fourier transform", "Matrix inversion"],
+                    correct: 1
+                },
+                {
+                    question: "What cryptographic protocol underpins most secure blockchain transaction ledgers and digital signatures?",
+                    options: ["RSA-2048 encryption", "Elliptic Curve Cryptography (ECC) & SHA-256", "DES symmetric cipher", "AES-128 hashing"],
+                    correct: 1
+                },
+                {
+                    question: "What term describes computing models that process data closer to where it is generated rather than a centralized cloud?",
+                    options: ["Edge computing", "Mainframe clustering", "Distributed batch processing", "Virtual machine partitioning"],
+                    correct: 0
+                },
+                {
+                    question: "Which programming paradigm treats computation as the evaluation of mathematical functions and avoids mutable state?",
+                    options: ["Object-oriented programming", "Procedural scripting", "Functional programming", "Imperative execution"],
+                    correct: 2
+                }
+            ],
+            science: [
+                {
+                    question: "Which specific enzyme is utilized in the CRISPR-Cas9 system to cleave target DNA strands?",
+                    options: ["DNA polymerase III", "Cas9 endonuclease", "RNA ligase", "Reverse transcriptase"],
+                    correct: 1
+                },
+                {
+                    question: "Inside eukaryotic cells, where does oxidative phosphorylation and major ATP synthesis occur?",
+                    options: ["Endoplasmic reticulum", "Ribosome clusters", "Mitochondrial inner membrane", "Golgi apparatus"],
+                    correct: 2
+                },
+                {
+                    question: "What subatomic particle was confirmed by CERN's Large Hadron Collider in 2012, explaining how particles acquire mass?",
+                    options: ["Neutrino", "Higgs boson", "Quark gluon", "Photon"],
+                    correct: 1
+                },
+                {
+                    question: "What chemical bond type holds complementary DNA strands together in a double helix structure?",
+                    options: ["Covalent bonds", "Ionic bonds", "Hydrogen bonds", "Metallic bonds"],
+                    correct: 2
+                },
+                {
+                    question: "What is the primary greenhouse gas responsible for planetary warming through infrared radiation absorption?",
+                    options: ["Nitrogen (N2)", "Argon (Ar)", "Carbon dioxide (CO2)", "Oxygen (O2)"],
+                    correct: 2
+                }
+            ],
+            history: [
+                {
+                    question: "In which century did the First Industrial Revolution begin in Great Britain?",
+                    options: ["16th Century", "18th Century (circa 1760s)", "20th Century", "14th Century"],
+                    correct: 1
+                },
+                {
+                    question: "Which NASA Apollo mission successfully landed the first humans on the lunar surface in July 1969?",
+                    options: ["Apollo 8", "Apollo 11", "Apollo 13", "Apollo 17"],
+                    correct: 1
+                },
+                {
+                    question: "What ancient civilization developed cuneiform script around 3200 BCE in Mesopotamia?",
+                    options: ["Ancient Egyptians", "Sumerians", "Indus Valley civilization", "Ancient Greeks"],
+                    correct: 1
+                },
+                {
+                    question: "The invention of the movable-type printing press around 1440 is attributed to which historical figure?",
+                    options: ["Leonardo da Vinci", "Johannes Gutenberg", "Galileo Galilei", "Nicolaus Copernicus"],
+                    correct: 1
+                },
+                {
+                    question: "Which major global conflict catalyzed the rapid development of radar, penicillin, and electronic computing?",
+                    options: ["World War I", "World War II", "The Napoleonic Wars", "The Cold War"],
+                    correct: 1
+                }
+            ]
+        };
+
+        let currentQuizCategory = null;
+        let currentQuestionIndex = 0;
+        let quizScore = 0;
+        let timerInterval = null;
+        let timeLeft = 15;
+        let isAnswerLocked = false;
+
+        function startQuiz(category) {
+            playSoundEffect('click');
+            currentQuizCategory = category;
+            currentQuestionIndex = 0;
+            quizScore = 0;
+
+            document.getElementById('quiz-setup').classList.add('hidden');
+            document.getElementById('quiz-results').classList.add('hidden');
+            document.getElementById('quiz-play').classList.remove('hidden');
+
+            document.getElementById('quiz-category-badge').textContent = category.toUpperCase();
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= quizDatabase[currentQuizCategory].length) {
+                endQuiz();
+                return;
+            }
+
+            isAnswerLocked = false;
+            const qData = quizDatabase[currentQuizCategory][currentQuestionIndex];
+            
+            document.getElementById('quiz-progress-text').textContent = `Question ${currentQuestionIndex + 1} of ${quizDatabase[currentQuizCategory].length}`;
+            document.getElementById('quiz-score').textContent = quizScore;
+            
+            const progressPercent = ((currentQuestionIndex) / quizDatabase[currentQuizCategory].length) * 100;
+            document.getElementById('quiz-progress-bar').style.width = progressPercent + '%';
+
+            document.getElementById('quiz-question').textContent = qData.question;
+            
+            const feedbackEl = document.getElementById('quiz-feedback');
+            feedbackEl.classList.add('hidden');
+            feedbackEl.className = 'hidden p-4 rounded-xl text-sm font-medium text-center animate-fade-in';
+
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+
+            qData.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full p-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-500 hover:bg-slate-800/80 transition-all text-left text-sm font-medium text-slate-200 flex items-center justify-between group';
+                btn.innerHTML = `
+                    <span class="flex items-center space-x-3">
+                        <span class="w-7 h-7 rounded-lg bg-slate-950 border border-slate-700 flex items-center justify-center font-mono text-xs text-cyan-400 group-hover:border-cyan-500">${String.fromCharCode(65 + idx)}</span>
+                        <span>${opt}</span>
+                    </span>
+                `;
+                btn.onclick = () => submitAnswer(idx, btn);
+                optionsContainer.appendChild(btn);
+            });
+
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 15;
+            document.getElementById('quiz-timer').textContent = timeLeft + 's';
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('quiz-timer').textContent = timeLeft + 's';
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeout();
+                }
+            }, 1000);
+        }
+
+        function handleTimeout() {
+            if (isAnswerLocked) return;
+            isAnswerLocked = true;
+            clearInterval(timerInterval);
+
+            playSoundEffect('wrong');
+            const qData = quizDatabase[currentQuizCategory][currentQuestionIndex];
+            
+            const feedbackEl = document.getElementById('quiz-feedback');
+            feedbackEl.textContent = "⏱️ Time expired! Correct answer was: " + qData.options[qData.correct];
+            feedbackEl.className = 'p-4 rounded-xl text-sm font-medium text-center bg-amber-500/10 text-amber-400 border border-amber-500/30 animate-fade-in';
+            feedbackEl.classList.remove('hidden');
+
+            highlightCorrectAnswer(qData.correct);
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                loadQuestion();
+            }, 2500);
+        }
+
+        function submitAnswer(selectedIndex, btnElement) {
+            if (isAnswerLocked) return;
+            isAnswerLocked = true;
+            clearInterval(timerInterval);
+
+            const qData = quizDatabase[currentQuizCategory][currentQuestionIndex];
+            const feedbackEl = document.getElementById('quiz-feedback');
+
+            if (selectedIndex === qData.correct) {
+                playSoundEffect('correct');
+                quizScore += 100;
+                document.getElementById('quiz-score').textContent = quizScore;
+                btnElement.className = 'w-full p-4 rounded-xl bg-cyan-500/10 border border-cyan-500 text-cyan-300 text-left text-sm font-medium flex items-center justify-between';
+                feedbackEl.textContent = "✨ Correct! Protocol verified successfully.";
+                feedbackEl.className = 'p-4 rounded-xl text-sm font-medium text-center bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 animate-fade-in';
+            } else {
+                playSoundEffect('wrong');
+                btnElement.className = 'w-full p-4 rounded-xl bg-pink-500/10 border border-pink-500 text-pink-300 text-left text-sm font-medium flex items-center justify-between';
+                feedbackEl.textContent = "❌ Incorrect. Correct answer: " + qData.options[qData.correct];
+                feedbackEl.className = 'p-4 rounded-xl text-sm font-medium text-center bg-pink-500/10 text-pink-400 border border-pink-500/30 animate-fade-in';
+                highlightCorrectAnswer(qData.correct);
+            }
+
+            feedbackEl.classList.remove('hidden');
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                loadQuestion();
+            }, 2500);
+        }
+
+        function highlightCorrectAnswer(correctIndex) {
+            const options = document.getElementById('quiz-options').children;
+            if (options[correctIndex]) {
+                options[correctIndex].className = 'w-full p-4 rounded-xl bg-cyan-500/10 border border-cyan-500 text-cyan-300 text-left text-sm font-medium flex items-center justify-between';
+            }
+        }
+
+        function endQuiz() {
+            playSoundEffect('victory');
+            document.getElementById('quiz-play').classList.add('hidden');
+            document.getElementById('quiz-results').classList.remove('hidden');
+
+            document.getElementById('quiz-final-score').textContent = quizScore + ' / 500';
+            
+            let msg = "Outstanding cognitive performance! You have mastered this protocol.";
+            if (quizScore < 300) {
+                msg = "Good effort! Review the Information Hub to deepen your knowledge.";
+            }
+            document.getElementById('quiz-final-message').textContent = msg;
+        }
+
+        function resetQuizSetup() {
+            playSoundEffect('click');
+            document.getElementById('quiz-results').classList.add('hidden');
+            document.getElementById('quiz-setup').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
